@@ -179,7 +179,7 @@ const Page: React.FC = () => {
                 }}
                 disabled={isUploading}
               />
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
+              <div className="mt-6 flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500">
                 <Checkbox
                   id="tos"
                   checked={isTosAccepted}
