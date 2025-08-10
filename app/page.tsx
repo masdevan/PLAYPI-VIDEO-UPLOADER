@@ -1,10 +1,9 @@
 "use client"
 
 import React from "react"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { toast } from "react-hot-toast"
-import { Upload, Pause, Play, VolumeX, Volume2, Share2, Download, Loader2 } from "lucide-react"
+import { Upload, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Header } from "@/components/header"
@@ -12,19 +11,16 @@ import { Footer } from "@/components/footer"
 import { validateVideoFile } from "@/lib/config"
 import Link from "next/link"
 import { config } from "@/lib/config"
+import ApiService from "@/lib/api"
+import VideoPlayer from "@/components/player"
 
 const Page: React.FC = () => {
   const [uploadedVideo, setUploadedVideo] = React.useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = React.useState(false)
-  const [isMuted, setIsMuted] = React.useState(false)
-  const [progress, setProgress] = React.useState(0)
-  const [duration, setDuration] = React.useState(0)
-  const [currentTime, setCurrentTime] = React.useState(0)
   const [isDragging, setIsDragging] = React.useState(false)
   const [isTosAccepted, setIsTosAccepted] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
+  const [uploadProgress, setUploadProgress] = React.useState(0)
 
-  const videoRef = React.useRef<HTMLVideoElement>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File) => {
@@ -35,16 +31,22 @@ const Page: React.FC = () => {
     }
 
     setIsUploading(true)
+    setUploadProgress(0)
+    
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      const url = URL.createObjectURL(file)
-      setUploadedVideo(url)
-      toast.success(`${file.name} is ready to play`)
+      await ApiService.uploadVideo(file, (progress) => {
+        setUploadProgress(progress)
+      })
+      
+      const objectUrl = URL.createObjectURL(file)
+      setUploadedVideo(objectUrl)
+      toast.success(`${file.name} uploaded successfully`)
     } catch (error) {
       console.error("Error during video upload:", error)
-      toast.error("There was an error uploading your video. Please try again.")
+      toast.error(error instanceof Error ? error.message : "There was an error uploading your video. Please try again.")
     } finally {
       setIsUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -71,70 +73,7 @@ const Page: React.FC = () => {
     setIsDragging(false)
   }
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
-    }
-  }
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
-    }
-  }
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const current = videoRef.current.currentTime
-      const total = videoRef.current.duration
-      setCurrentTime(current)
-      setProgress((current / total) * 100)
-    }
-  }
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration)
-    }
-  }
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (videoRef.current) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const clickX = e.clientX - rect.left
-      const width = rect.width
-      const newTime = (clickX / width) * duration
-      videoRef.current.currentTime = newTime
-    }
-  }
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
-  }
-
-  const handleShare = () => {
-    if (uploadedVideo) {
-      navigator.clipboard.writeText(window.location.href)
-      toast.success("Video link has been copied to clipboard")
-    }
-  }
-
-  const handleDownload = () => {
-    if (uploadedVideo) {
-      const a = document.createElement("a")
-      a.href = uploadedVideo
-      a.download = "video.mp4"
-      a.click()
-    }
-  }
 
   return (
     <div className="flex flex-col min-h-screen text-white" style={{ backgroundColor: "#111111" }} suppressHydrationWarning>
@@ -152,14 +91,21 @@ const Page: React.FC = () => {
               onDragLeave={handleDragLeave}
             >
               {isUploading ? (
-                <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-400 animate-spin" />
+                <div className="text-center relative">
+                  <Loader2 className="w-14 h-14 mx-auto mb-4 text-gray-400 animate-spin" />
+                  <div className="text-sm font-bold text-purple-400 absolute top-0 translate-x-1/2 left-1/2" style={{ marginLeft: uploadProgress < 10 ? "-22px" : "-32px", marginTop: "18px" }}>
+                    {uploadProgress}%
+                  </div>
+                </div>
               ) : (
-                <Upload className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-400" />
+                <>
+                  <Upload className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-400" />
+                  <h2 className="text-xl sm:text-2xl font-semibold mb-2">
+                    Upload Your Video
+                  </h2>
+                  <p className="text-sm sm:text-base text-gray-400 mb-6">Drag & drop your video file or click to select</p>
+                </>
               )}
-              <h2 className="text-xl sm:text-2xl font-semibold mb-2">
-                {isUploading ? "Uploading Video..." : "Upload Your Video"}
-              </h2>
-              <p className="text-sm sm:text-base text-gray-400 mb-6">Drag & drop your video file or click to select</p>
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm sm:text-base cursor-pointer"
@@ -219,96 +165,12 @@ const Page: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-0 overflow-hidden" style={{ backgroundColor: "#111111", borderRadius: "0" }}>
-              <div className="relative">
-                <video
-                  ref={videoRef}
-                  src={uploadedVideo}
-                  className="w-full bg-black"
-                  onTimeUpdate={handleTimeUpdate}
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-2 sm:p-4">
-                  <div className="w-full h-1 bg-gray-600 mb-2 sm:mb-3 cursor-pointer" onClick={handleProgressClick}>
-                    <div className="h-full bg-primary transition-all duration-100" style={{ width: `${progress}%` }} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={togglePlay}
-                        className="text-white hover:bg-white/20 w-8 h-8 sm:w-auto sm:h-auto"
-                        style={{ borderRadius: "0" }}
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
-                        ) : (
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleMute}
-                        className="text-white hover:bg-white/20 w-8 h-8 sm:w-auto sm:h-auto"
-                        style={{ borderRadius: "0" }}
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />
-                        ) : (
-                          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                        )}
-                      </Button>
-                      <div className="text-xs sm:text-sm text-gray-300">
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleShare}
-                        className="text-white hover:bg-white/20 w-8 h-8 sm:w-auto sm:h-auto"
-                        style={{ borderRadius: "0" }}
-                      >
-                        <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDownload}
-                        className="text-white hover:bg-white/20 w-8 h-8 sm:w-auto sm:h-auto"
-                        style={{ borderRadius: "0" }}
-                      >
-                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-            <div className="mt-4 sm:mt-6 text-center">
-              <Button
-                onClick={() => {
-                  setUploadedVideo(null)
-                  setIsPlaying(false)
-                  setProgress(0)
-                  setCurrentTime(0)
-                  setDuration(0)
-                }}
-                variant="outline"
-                className="border-gray-700 text-gray-300 hover:bg-gray-800 text-sm sm:text-base"
-                style={{ borderRadius: "0", backgroundColor: "#111111" }}
-              >
-                Upload New Video
-              </Button>
-            </div>
-          </div>
+          <VideoPlayer 
+            src={uploadedVideo} 
+            onBack={() => {
+              setUploadedVideo(null)
+            }}
+          />
         )}
       </main>
       <Footer />

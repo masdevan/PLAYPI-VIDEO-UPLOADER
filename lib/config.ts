@@ -12,10 +12,7 @@ export const config = {
     debugMode: process.env.NEXT_PUBLIC_DEBUG_MODE === 'true',
     nodeEnv: process.env.NODE_ENV || 'development',
   },
-  api: {
-    url: process.env.NEXT_PUBLIC_API_URL,
-    uploadEndpoint: process.env.NEXT_PUBLIC_UPLOAD_ENDPOINT,
-  },
+
   storage: {
     provider: process.env.NEXT_PUBLIC_STORAGE_PROVIDER || 'local',
     bucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
