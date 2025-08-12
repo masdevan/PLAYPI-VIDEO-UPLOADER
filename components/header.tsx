@@ -24,7 +24,7 @@ export function Header() {
             className="text-white hover:bg-white/20 text-xs sm:text-sm"
             style={{ borderRadius: "0" }}
           >
-            <Link href="/featured-videos">Featured Videos</Link>
+            <Link href="/latest-videos">Latest Videos</Link>
           </Button>
         </div>
       </div>

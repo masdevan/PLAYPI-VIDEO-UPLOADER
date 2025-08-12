@@ -6,101 +6,25 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image" 
-import { ChevronUp, ChevronDown, Share2, Home } from "lucide-react"
-import { toast } from "react-hot-toast" 
+import { ChevronUp, ChevronDown, Share2, Home, Loader2, ChevronLeft } from "lucide-react"
+import { toast } from "react-hot-toast"
+import ApiService from "@/services/api"
+import VideoPlayer from "@/components/player" 
 
-const allVideos = [
-  {
-    id: "1",
-    url: "/placeholder-ag2t2.png",
-    title: "Morning Dew",
-    description: "A serene view of nature waking up with gentle light.",
-  },
-  {
-    id: "2",
-    url: "/placeholder-1nalx.png",
-    title: "Urban Explorer",
-    description: "Discovering hidden gems and vibrant street art in the city.",
-  },
-  {
-    id: "3",
-    url: "/forest-whispers-vertical.png",
-    title: "Forest Whispers",
-    description: "The calming sounds of wind through ancient trees.",
-  },
-  {
-    id: "4",
-    url: "/desert-sunset-vertical.png",
-    title: "Desert Sunset",
-    description: "Breathtaking colors as the sun dips below the horizon.",
-  },
-  {
-    id: "5",
-    url: "/placeholder-pyj55.png",
-    title: "Ocean Depths",
-    description: "Exploring the mysterious and beautiful underwater world.",
-  },
-  {
-    id: "6",
-    url: "/mountain-ascent-vertical.png",
-    title: "Mountain Ascent",
-    description: "Conquering peaks and enjoying panoramic views.",
-  },
-  {
-    id: "7",
-    url: "/placeholder-vqu7u.png",
-    title: "Cozy Cafe Vibes",
-    description: "Relaxing atmosphere with a warm cup of coffee.",
-  },
-  {
-    id: "8",
-    url: "/starry-night-vertical.png",
-    title: "Starry Night Sky",
-    description: "Gazing at the vastness of the universe.",
-  },
-  {
-    id: "9",
-    url: "/rainy-day-comfort.png",
-    title: "Rainy Day Comfort",
-    description: "The soothing sound of rain against the window.",
-  },
-  {
-    id: "10",
-    url: "/placeholder-94g3n.png",
-    title: "City Lights",
-    description: "The vibrant glow of a bustling metropolis at night.",
-  },
-  {
-    id: "11",
-    url: "/placeholder.svg?height=1920&width=1080",
-    title: "Autumn Leaves",
-    description: "A colorful display of fall foliage in the countryside.",
-  },
-  {
-    id: "12",
-    url: "/placeholder.svg?height=1920&width=1080",
-    title: "Winter Wonderland",
-    description: "Snow-covered landscapes and frosty mornings.",
-  },
-  {
-    id: "13",
-    url: "/placeholder.svg?height=1920&width=1080",
-    title: "Spring Blooms",
-    description: "Flowers bursting into color after a long winter.",
-  },
-  {
-    id: "14",
-    url: "/placeholder.svg?height=1920&width=1080",
-    title: "Summer Beach Day",
-    description: "Sun, sand, and refreshing ocean waves.",
-  },
-  {
-    id: "15",
-    url: "/placeholder.svg?height=1920&width=1080",
-    title: "Underwater Adventure",
-    description: "Diving deep to explore marine life and coral reefs.",
-  },
-]
+interface Video {
+  id: number
+  title: string
+  description?: string
+  filename: string
+  path: string
+  mime_type: string
+  size: number
+  status: number
+  created_at: string
+  updated_at: string
+  preview_url: string
+  thumbnail_url: string
+}
 
 interface VideoPageProps {
   params: Promise<{
@@ -113,14 +37,48 @@ const DEBOUNCE_TIME = 200
 const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
   const router = useRouter()
   const unwrappedParams = use(params) as { id: string }
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(() => allVideos.findIndex((v) => v.id === unwrappedParams.id))
+  const [videos, setVideos] = useState<Video[]>([])
+  const [currentVideo, setCurrentVideo] = useState<Video | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
 
   useEffect(() => {
-    const newIndex = allVideos.findIndex((v) => v.id === unwrappedParams.id)
-    if (newIndex !== -1 && newIndex !== currentVideoIndex) {
-      setCurrentVideoIndex(newIndex)
+    const fetchVideos = async () => {
+      try {
+        setLoading(true)
+        const response = await ApiService.getVideos(1, 100)
+        const videosData = response.videos || response.data || response || []
+        setVideos(videosData)
+        
+        const videoIndex = videosData.findIndex((v: Video) => v.id.toString() === unwrappedParams.id)
+        if (videoIndex !== -1) {
+          setCurrentVideoIndex(videoIndex)
+          setCurrentVideo(videosData[videoIndex])
+          console.log('Video found:', videosData[videoIndex])
+        } else {
+          console.log('Video not found for ID:', unwrappedParams.id)
+          console.log('Available videos:', videosData.map((v: Video) => ({ id: v.id, title: v.title })))
+        }
+      } catch (error) {
+        console.error('Error fetching videos:', error)
+        toast.error('Failed to load videos')
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [unwrappedParams.id, currentVideoIndex])
+
+    fetchVideos()
+  }, [unwrappedParams.id])
+
+  useEffect(() => {
+    if (videos.length > 0) {
+      const newIndex = videos.findIndex((v) => v.id.toString() === unwrappedParams.id)
+      if (newIndex !== -1 && newIndex !== currentVideoIndex) {
+        setCurrentVideoIndex(newIndex)
+        setCurrentVideo(videos[newIndex])
+      }
+    }
+  }, [unwrappedParams.id, currentVideoIndex, videos])
 
   
   const navigateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -134,17 +92,17 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
       navigateTimeoutRef.current = setTimeout(() => {
         let newIndex = currentVideoIndex
         if (direction === "down") {
-          newIndex = Math.min(currentVideoIndex + 1, allVideos.length - 1)
+          newIndex = Math.min(currentVideoIndex + 1, videos.length - 1)
         } else {
           newIndex = Math.max(currentVideoIndex - 1, 0)
         }
 
-        if (newIndex !== currentVideoIndex) {
-          router.push(`/video/${allVideos[newIndex].id}`)
+        if (newIndex !== currentVideoIndex && videos[newIndex]) {
+          router.push(`/video/${videos[newIndex].id}`)
         }
       }, DEBOUNCE_TIME)
     },
-    [currentVideoIndex, router],
+    [currentVideoIndex, router, videos],
   )
 
   
@@ -192,11 +150,20 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
     }
   }, [])
 
-  const currentVideo = allVideos[currentVideoIndex]
   const isFirstVideo = currentVideoIndex === 0
-  const isLastVideo = currentVideoIndex === allVideos.length - 1
+  const isLastVideo = currentVideoIndex === videos.length - 1
 
-
+  if (loading) {
+    return (
+      <div
+        className="flex flex-col min-h-screen items-center justify-center text-white"
+        style={{ backgroundColor: "#111111" }}
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <p className="mt-4 text-gray-400">Loading video...</p>
+      </div>
+    )
+  }
 
   if (!currentVideo) {
     return (
@@ -205,13 +172,13 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         style={{ backgroundColor: "#111111" }}
       >
         <p>Content not found.</p>
-        <Link href="/featured-videos">
+        <Link href="/latest-videos">
           <Button
             variant="outline"
             className="mt-4 border-gray-700 text-gray-300 hover:bg-gray-800 bg-transparent"
             style={{ borderRadius: "0" }}
           >
-            Back to Featured Videos
+            Back to Latest Videos
           </Button>
         </Link>
       </div>
@@ -223,37 +190,26 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
       className="relative w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{ backgroundColor: "#111111" }}
     >
-      
-      <div
-        className="relative w-full h-full max-w-full max-h-full" 
-        style={{ aspectRatio: "9 / 16", backgroundColor: "#000000" }}
-      >
-        <Image
-          key={currentVideo.id} 
-          src={currentVideo.url || "/placeholder.svg"}
-          alt={currentVideo.title}
-          layout="fill"
-          objectFit="contain" 
-          className="absolute inset-0"
-        />
+      <div className="relative w-full h-full">
+        {currentVideo.preview_url ? (
+          <VideoPlayer 
+            src={currentVideo.preview_url}
+            uploadResponse={currentVideo}
+            onBack={() => router.push('/latest-videos')}
+            showBackButton={false}
+            fullWidth={true}
+            fullHeight={true}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <p>Video source not available</p>
+          </div>
+        )}
         
-        <div className="absolute bottom-4 left-4 text-gray-400 text-sm font-semibold z-20 line-clamp-2">
+        <div className="absolute top-4 left-4 text-white text-base font-semibold z-20 line-clamp-2 max-w-xs">
           {currentVideo.title}
         </div>
 
-        
-        <Link href="/featured-videos" passHref>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 left-4 text-white hover:bg-white/20 w-10 h-10 cursor-pointer z-20"
-            style={{ borderRadius: "0" }}
-          >
-            <Home className="w-6 h-6" /> 
-          </Button>
-        </Link>
-
-        
         <Button
           variant="ghost"
           size="icon"
@@ -265,7 +221,6 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         </Button>
       </div>
 
-      
       <div className="hidden md:flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
         <Button
           variant="ghost"

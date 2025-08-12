@@ -11,11 +11,12 @@ import { Footer } from "@/components/footer"
 import { validateVideoFile } from "@/lib/config"
 import Link from "next/link"
 import { config } from "@/lib/config"
-import ApiService from "@/lib/api"
+import ApiService from "@/services/api"
 import VideoPlayer from "@/components/player"
 
 const Page: React.FC = () => {
   const [uploadedVideo, setUploadedVideo] = React.useState<string | null>(null)
+  const [uploadResponse, setUploadResponse] = React.useState<any>(null)
   const [isDragging, setIsDragging] = React.useState(false)
   const [isTosAccepted, setIsTosAccepted] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
@@ -34,12 +35,13 @@ const Page: React.FC = () => {
     setUploadProgress(0)
     
     try {
-      await ApiService.uploadVideo(file, (progress) => {
+      const response = await ApiService.uploadVideo(file, (progress) => {
         setUploadProgress(progress)
       })
       
       const objectUrl = URL.createObjectURL(file)
       setUploadedVideo(objectUrl)
+      setUploadResponse(response)
       toast.success(`${file.name} uploaded successfully`)
     } catch (error) {
       console.error("Error during video upload:", error)
@@ -167,8 +169,10 @@ const Page: React.FC = () => {
         ) : (
           <VideoPlayer 
             src={uploadedVideo} 
+            uploadResponse={uploadResponse}
             onBack={() => {
               setUploadedVideo(null)
+              setUploadResponse(null)
             }}
           />
         )}

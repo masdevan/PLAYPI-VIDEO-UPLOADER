@@ -1,17 +1,28 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Download, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize2, Minimize } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import { ApiService } from '@/lib/api'
+import VideoSurface from '@/components/player/VideoSurface'
+import CenterPlayOverlay from '@/components/player/CenterPlayOverlay'
+import ControlsBar from '@/components/player/ControlsBar'
+import BackToUploadButton from '@/components/player/BackToUploadButton'
 
 interface VideoPlayerProps {
   src: string
+  uploadResponse?: any
   onBack: () => void
+  showBackButton?: boolean
+  fullWidth?: boolean
+  fullHeight?: boolean
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onBack }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
+  src, 
+  uploadResponse, 
+  onBack, 
+  showBackButton = true, 
+  fullWidth = false, 
+  fullHeight = false 
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
@@ -151,44 +162,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onBack }) => {
     handleVideoInteraction()
   }
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
 
-  const handleDownload = async () => {
-    const isValidUrl = src.startsWith('http://') || src.startsWith('https://');
-    
-    if (isValidUrl) {
-      try {
-        const safelinkResponse = await ApiService.createSafelink(src);
-        
-        if (safelinkResponse && safelinkResponse.data && safelinkResponse.data.short_url) {
-          await navigator.clipboard.writeText(safelinkResponse.data.short_url);
-          toast.success("Safelink has been copied to clipboard!");
-        } else {
-          downloadVideo();
-        }
-      } catch (error) {
-        console.error('Safelink creation failed:', error);
-        downloadVideo();
-      }
-    } else {
-      downloadVideo();
-    }
-  }
-
-  const downloadVideo = () => {
-    const a = document.createElement("a")
-    a.href = src
-    a.download = "video.mp4"
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    toast.success("Video download started!");
-  }
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -237,154 +211,40 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onBack }) => {
   }, [isPlaying])
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-black rounded-none overflow-hidden relative" style={{ backgroundColor: "#111111" }} ref={videoContainerRef} onMouseMove={handleMouseMove} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
-        <video
-          ref={videoRef}
-          src={src}
-          className="w-full bg-black"
-          style={{ minHeight: '400px' }}
-          onContextMenu={(e) => e.preventDefault()}
-          onDragStart={(e) => e.preventDefault()}
-        />
-        
-        <div 
-          className="absolute inset-0 w-full h-full"
-          style={{ pointerEvents: 'auto' }}
-          onContextMenu={(e) => e.preventDefault()}
-          onClick={togglePlay}
-          onMouseMove={handleMouseMove}
+    <div className={`${fullWidth ? 'w-full' : 'max-w-4xl mx-auto'} ${fullHeight ? 'h-full' : ''}`}>
+      <VideoSurface
+        videoRef={videoRef}
+        videoContainerRef={videoContainerRef}
+        src={src}
+        onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTogglePlay={togglePlay}
+      >
+        <CenterPlayOverlay isPlaying={isPlaying} />
+
+        <ControlsBar
+          show={showControls}
+          progressRef={progressRef}
+          progress={progress}
+          onProgressClick={handleProgressClick}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+          onSkipBackward={skipBackward}
+          onSkipForward={skipForward}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          currentTime={currentTime}
+          duration={duration}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          uploadResponse={uploadResponse}
         />
-        
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className={`p-3 bg-black/50 rounded-full transition-opacity cursor-pointer duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}>
-            {isPlaying ? (
-              <Pause className="w-8 h-8 text-purple-500 cursor-pointer" />
-            ) : (
-              <Play className="w-8 h-8 text-purple-500 cursor-pointer" />
-            )}
-          </div>
-        </div>
-        
-        <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-2 transition-transform duration-300 ${showControls ? 'translate-y-0' : 'translate-y-full'}`}>
-          <div 
-            ref={progressRef}
-            className="w-full h-1 bg-gray-600 mb-2 cursor-pointer" 
-            onClick={handleProgressClick}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-          >
-            <div 
-              className="h-full bg-purple-500 transition-all duration-100" 
-              style={{ width: `${progress}%` }} 
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={togglePlay}
-                onTouchStart={handleTouchStart}
-                className="text-white hover:bg-white/20 w-8 h-8 sm:w-10 sm:h-10 cursor-pointer p-0"
-                style={{ borderRadius: "0" }}
-              >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
-                ) : (
-                  <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                )}
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={skipBackward}
-                onTouchStart={handleTouchStart}
-                className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-                style={{ borderRadius: "0" }}
-                title="Skip Backward 10s"
-              >
-                <SkipBack className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={skipForward}
-                onTouchStart={handleTouchStart}
-                className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-                style={{ borderRadius: "0" }}
-                title="Skip Forward 10s"
-              >
-                <SkipForward className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleMute}
-                onTouchStart={handleTouchStart}
-                className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-                style={{ borderRadius: "0" }}
-              >
-                {isMuted ? (
-                  <VolumeX className="w-3 h-3 sm:w-4 sm:h-4" />
-                ) : (
-                  <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                )}
-              </Button>
-              
-              <div className="text-xs text-gray-300 ml-2">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
-            </div>
+      </VideoSurface>
 
-            <div className="flex items-center gap-1">
-                <Button
-                 variant="ghost"
-                 size="sm"
-                 onClick={handleDownload}
-                 onTouchStart={handleTouchStart}
-                 className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-                 style={{ borderRadius: "0" }}
-                 title="Get Safelink"
-               >
-                <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleFullscreen}
-                onTouchStart={handleTouchStart}
-                className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-                style={{ borderRadius: "0" }}
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-              >
-                {isFullscreen ? (
-                  <Minimize className="w-3 h-3 sm:w-4 sm:h-4" />
-                ) : (
-                  <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="mt-4 sm:mt-6 text-center">
-        <Button
-          onClick={onBack}
-          variant="outline"
-          className="border-gray-700 text-gray-300 hover:bg-gray-800 cursor-pointer"
-          style={{ borderRadius: "0", backgroundColor: "#111111" }}
-        >
-          ← Back to Upload
-        </Button>
-      </div>
+      {showBackButton && <BackToUploadButton onBack={onBack} />}
     </div>
   )
 }
