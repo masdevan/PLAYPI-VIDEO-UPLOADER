@@ -9,7 +9,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: `${process.env.NEXT_PUBLIC_PLAYPI_NAME || 'PlayPi'} - Upload & Share Videos`,
   description: process.env.NEXT_PUBLIC_PLAYPI_DESCRIPTION || "A simple platform to upload and share videos with a dark theme",
-  generator: 'v0.dev',
   icons: {
     icon: '/icon/icon.png',
     shortcut: '/icon/icon.png',
