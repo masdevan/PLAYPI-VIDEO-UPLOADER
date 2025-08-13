@@ -1,0 +1,38 @@
+name: Deploy via SSH
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: 22
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use --lts
+
+            cd /var/www/playpi
+            git pull origin main
+            npm install
+            npm run build
+
+            if pm2 list | grep -q production; then
+              pm2 restart production
+            else
+              pm2 start npm --name production -- run start
+            fi
