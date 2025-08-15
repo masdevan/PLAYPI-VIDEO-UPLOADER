@@ -6,13 +6,13 @@ import { toast } from "react-hot-toast"
 import { Upload, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { Header } from "@/components/Header"
+import { Footer } from "@/components/Footer"
 import { validateVideoFile } from "@/lib/config"
 import Link from "next/link"
 import { config } from "@/lib/config"
 import ApiService from "@/services/api"
-import VideoPlayer from "@/components/player"
+import VideoPlayer from "@/components/Player"
 
 const Page: React.FC = () => {
   const [uploadedVideo, setUploadedVideo] = React.useState<string | null>(null)
@@ -78,16 +78,16 @@ const Page: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col min-h-screen text-white" style={{ backgroundColor: "#111111" }} suppressHydrationWarning>
+    <div className="flex flex-col min-h-screen text-white" style={{ backgroundColor: "#0E0E0E" }} suppressHydrationWarning>
       <Header />
-      <main className="container mx-auto px-4 py-8 sm:py-16 flex-grow">
+      <main className={`container mx-auto px-4 py-8 sm:py-16 flex-grow block ${uploadedVideo ? 'mb-10' : ''}`}>
         {!uploadedVideo ? (
           <div className="max-w-2xl mx-auto">
             <div
               className={`p-6 sm:p-12 text-center border-2 border-dashed transition-all duration-200 ${
-                isDragging ? "border-purple-400 bg-purple-400/10" : "border-gray-700 hover:border-gray-600"
+                isDragging ? "border-purple-400 bg-purple-400/10" : "border-[#1c1c1c] hover:border-[#1c1c1c]"
               } ${isUploading ? "opacity-50 cursor-not-allowed" : ""}`}
-              style={{ backgroundColor: "#111111" }}
+              style={{ backgroundColor: "#0A0A0A" }}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -132,7 +132,7 @@ const Page: React.FC = () => {
                   id="tos"
                   checked={isTosAccepted}
                   onCheckedChange={(checked) => setIsTosAccepted(!!checked)}
-                  className="border-gray-500 cursor-pointer data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                  className="border-[#393939] cursor-pointer data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                   disabled={isUploading}
                 />
                 <Label
@@ -159,7 +159,7 @@ const Page: React.FC = () => {
                 Supports: MP4, WebM, AVI, MOV
               </div>
             </div>
-            <div className="mt-8 p-6 sm:p-8 text-center border border-gray-800" style={{ backgroundColor: "#111111" }}>
+            <div className="mt-8 p-6 sm:p-8 text-center border border-[#1c1c1c]" style={{ backgroundColor: "#0A0A0A" }}>
               <h3 className="text-lg sm:text-xl font-semibold mb-3 text-gray-300">Important Information</h3>
               <p className="text-sm sm:text-base text-gray-400">
                 When you upload a video, it means that you agree to the rules and services provided by {config.platform.name}, and you cannot sue or do anything stated in the {config.platform.name} rules, this platform is intended for people who want to immortalize their work but in a transparent and easy way.
@@ -167,14 +167,35 @@ const Page: React.FC = () => {
             </div>
           </div>
         ) : (
-          <VideoPlayer 
-            src={uploadedVideo} 
-            uploadResponse={uploadResponse}
-            onBack={() => {
-              setUploadedVideo(null)
-              setUploadResponse(null)
-            }}
-          />
+          <div className="max-w-6xl mx-auto">
+            <div className="relative w-full">
+              <div className="hidden md:block relative w-full" style={{ aspectRatio: '16/9' }}>
+                <VideoPlayer 
+                  src={uploadedVideo} 
+                  uploadResponse={uploadResponse}
+                  onBack={() => {
+                    setUploadedVideo(null)
+                    setUploadResponse(null)
+                  }}
+                  fullWidth={true}
+                  fullHeight={true}
+                />
+              </div>
+              
+              <div className="md:hidden relative w-full" style={{ aspectRatio: '1/1' }}>
+                <VideoPlayer 
+                  src={uploadedVideo} 
+                  uploadResponse={uploadResponse}
+                  onBack={() => {
+                    setUploadedVideo(null)
+                    setUploadResponse(null)
+                  }}
+                  fullWidth={true}
+                  fullHeight={true}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </main>
       <Footer />

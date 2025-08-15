@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { Header } from "@/components/Header"
+import { Footer } from "@/components/Footer"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
@@ -107,11 +107,11 @@ const FeaturedVideosPage = () => {
               <Link href={`/video/${video.id}`} key={video.id} className="block">
                 <Card
                   className="border-0 overflow-hidden hover:opacity-80 transition-opacity"
-                  style={{ backgroundColor: "#111111", borderRadius: "0" }}
+                  style={{ backgroundColor: "#0A0A0A", borderRadius: "0" }}
                 >
-                                  <div 
+                <div 
                   className="relative w-full group" 
-                  style={{ paddingBottom: "177.77%" }}
+                  style={{ aspectRatio: "9/16" }}
                   onMouseEnter={(e) => {
                     const video = e.currentTarget.querySelector('video')
                     if (video) {
@@ -154,7 +154,7 @@ const FeaturedVideosPage = () => {
               onClick={handleLoadMore}
               disabled={loadingMore}
               variant="outline"
-              className="border-gray-700 text-gray-300 hover:bg-gray-800 text-sm sm:text-base bg-transparent cursor-pointer disabled:opacity-50"
+              className="border-[#1c1c1c] text-gray-300 hover:bg-gray-800 text-sm sm:text-base bg-transparent cursor-pointer disabled:opacity-50"
               style={{ borderRadius: "0", backgroundColor: "#111111" }}
             >
               {loadingMore ? (

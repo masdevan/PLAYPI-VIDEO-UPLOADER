@@ -5,8 +5,16 @@ import { config } from "@/lib/config"
 
 export function Header() {
   return (
-    <header className="border-b border-gray-800" style={{ backgroundColor: "#111111" }}>
-      <div className="container mx-auto px-4 py-4">
+    <header 
+    className="border-b border-[#1c1c1c] relative" 
+    style={{ 
+      backgroundImage: "url('/icon/pattern.png')",
+      backgroundRepeat: "repeat",
+      backgroundSize: "180px 180px",
+      backgroundColor: "#111111",
+    }}>
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-80 z-10"></div>
+      <div className="container mx-auto px-4 py-4 z-20 relative">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 text-xl sm:text-2xl font-bold text-white hover:text-gray-300 transition-colors">
             <Image 

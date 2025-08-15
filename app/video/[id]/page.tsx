@@ -9,7 +9,7 @@ import Image from "next/image"
 import { ChevronUp, ChevronDown, Share2, Home, Loader2, ChevronLeft } from "lucide-react"
 import { toast } from "react-hot-toast"
 import ApiService from "@/services/api"
-import VideoPlayer from "@/components/player" 
+import VideoPlayer from "@/components/Player" 
 
 interface Video {
   id: number
@@ -41,6 +41,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -115,6 +116,29 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
     [navigateVideo],
   )
 
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0]
+    setTouchStart(touch.clientY)
+  }, [])
+
+  const handleTouchMove = useCallback((event: React.TouchEvent) => {
+    if (!touchStart) return
+    
+    const touch = event.touches[0]
+    const currentY = touch.clientY
+    const diff = touchStart - currentY
+    
+    if (Math.abs(diff) > 50) { 
+      const direction = diff > 0 ? "down" : "up"
+      navigateVideo(direction)
+      setTouchStart(null)
+    }
+  }, [touchStart, navigateVideo])
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchStart(null)
+  }, [])
+
   
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -175,7 +199,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         <Link href="/latest-videos">
           <Button
             variant="outline"
-            className="mt-4 border-gray-700 text-gray-300 hover:bg-gray-800 bg-transparent"
+                          className="mt-4 border-[#1c1c1c] text-gray-300 hover:bg-gray-800 bg-transparent"
             style={{ borderRadius: "0" }}
           >
             Back to Latest Videos
@@ -189,6 +213,9 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
     <div
       className="relative w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{ backgroundColor: "#111111" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="relative w-full h-full">
         {currentVideo.preview_url ? (
@@ -210,6 +237,11 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
           {currentVideo.title}
         </div>
 
+        {/* Mobile Swipe Indicator */}
+        <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-xs z-20 bg-black/50 px-3 py-1 rounded">
+          Swipe up/down to navigate
+        </div>
+
         <Button
           variant="ghost"
           size="icon"
@@ -221,6 +253,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         </Button>
       </div>
 
+      {/* Desktop Navigation */}
       <div className="hidden md:flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
         <Button
           variant="ghost"
@@ -238,6 +271,29 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
           onClick={() => navigateVideo("down")}
           disabled={isLastVideo}
           className="text-white hover:bg-white/20 w-10 h-10 cursor-pointer"
+          style={{ borderRadius: "0" }}
+        >
+          <ChevronDown className="w-6 h-6" />
+        </Button>
+      </div>
+
+      <div className="md:hidden flex flex-row gap-4 absolute bottom-4 left-1/2 -translate-x-1/2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigateVideo("up")}
+          disabled={isFirstVideo}
+          className="text-white bg-black/50 hover:bg-black/70 w-12 h-12 cursor-pointer"
+          style={{ borderRadius: "0" }}
+        >
+          <ChevronUp className="w-6 h-6" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigateVideo("down")}
+          disabled={isLastVideo}
+          className="text-white bg-black/50 hover:bg-black/70 w-12 h-12 cursor-pointer"
           style={{ borderRadius: "0" }}
         >
           <ChevronDown className="w-6 h-6" />
