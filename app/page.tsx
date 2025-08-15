@@ -6,13 +6,13 @@ import { toast } from "react-hot-toast"
 import { Upload, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Header } from "@/components/Header"
-import { Footer } from "@/components/Footer"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 import { validateVideoFile } from "@/lib/config"
 import Link from "next/link"
 import { config } from "@/lib/config"
 import ApiService from "@/services/api"
-import VideoPlayer from "@/components/Player"
+import VideoPlayer from "@/components/player"
 
 const Page: React.FC = () => {
   const [uploadedVideo, setUploadedVideo] = React.useState<string | null>(null)

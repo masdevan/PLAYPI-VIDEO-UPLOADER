@@ -9,7 +9,7 @@ import Image from "next/image"
 import { ChevronUp, ChevronDown, Share2, Home, Loader2, ChevronLeft } from "lucide-react"
 import { toast } from "react-hot-toast"
 import ApiService from "@/services/api"
-import VideoPlayer from "@/components/Player" 
+import VideoPlayer from "@/components/player" 
 
 interface Video {
   id: number
