@@ -10,6 +10,7 @@ type VideoSurfaceProps = {
   onTouchStart: () => void
   onTouchMove: () => void
   onTogglePlay: () => void
+  onClick?: () => void
 }
 
 export default function VideoSurface(
@@ -21,9 +22,15 @@ export default function VideoSurface(
     onTouchStart,
     onTouchMove,
     onTogglePlay,
+    onClick,
     children,
   }: PropsWithChildren<VideoSurfaceProps>
 ) {
+  const handleVideoClick = () => {
+    onTogglePlay()
+    onClick?.()
+  }
+
   return (
     <div
       className="bg-black rounded-none overflow-hidden relative w-full h-full"
@@ -45,7 +52,7 @@ export default function VideoSurface(
         className="absolute inset-0 w-full h-full"
         style={{ pointerEvents: "auto" }}
         onContextMenu={(e) => e.preventDefault()}
-        onClick={onTogglePlay}
+        onClick={handleVideoClick}
         onMouseMove={onMouseMove}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}

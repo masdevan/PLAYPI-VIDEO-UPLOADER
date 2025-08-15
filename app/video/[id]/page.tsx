@@ -239,7 +239,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
 
         {/* Mobile Swipe Indicator */}
         <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-xs z-20 bg-black/50 px-3 py-1 rounded">
-          Swipe up/down to navigate
+          Swipe up/down to navigate • Auto-play
         </div>
 
         <Button
@@ -277,28 +277,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         </Button>
       </div>
 
-      <div className="md:hidden flex flex-row gap-4 absolute bottom-4 left-1/2 -translate-x-1/2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigateVideo("up")}
-          disabled={isFirstVideo}
-          className="text-white bg-black/50 hover:bg-black/70 w-12 h-12 cursor-pointer"
-          style={{ borderRadius: "0" }}
-        >
-          <ChevronUp className="w-6 h-6" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigateVideo("down")}
-          disabled={isLastVideo}
-          className="text-white bg-black/50 hover:bg-black/70 w-12 h-12 cursor-pointer"
-          style={{ borderRadius: "0" }}
-        >
-          <ChevronDown className="w-6 h-6" />
-        </Button>
-      </div>
+
     </div>
   )
 }

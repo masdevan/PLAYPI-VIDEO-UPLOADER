@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import VideoSurface from '@/components/player/VideoSurface'
 import CenterPlayOverlay from '@/components/player/CenterPlayOverlay'
 import ControlsBar from '@/components/player/ControlsBar'
@@ -46,6 +46,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         e.preventDefault()
         return false
       }
+      
+      // Show controls when any key is pressed (except special keys)
+      if (!['F12', 'Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
+        showControlsTemporarily()
+      }
     }
 
     const handleContextMenu = (e: MouseEvent) => {
@@ -54,7 +59,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
 
     const handleDevTools = () => {
-      if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.outerWidth > 200) {
+      if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
         document.body.innerHTML = '<div class="text-center p-8 text-red-500">Developer tools detected!</div>'
       }
     }
@@ -114,6 +119,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current)
+        controlsTimeoutRef.current = null
       }
     }
   }, [])
@@ -174,22 +180,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }
 
-  const showControlsTemporarily = () => {
+  const showControlsTemporarily = useCallback(() => {
     setShowControls(true)
     
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current)
     }
-    
     controlsTimeoutRef.current = setTimeout(() => {
       if (isPlaying) {
         setShowControls(false)
       }
     }, 2000)
-  }
+  }, [isPlaying])
 
   const handleMouseMove = () => {
-    showControlsTemporarily()
+    if (isPlaying) {
+      showControlsTemporarily()
+    }
   }
 
   const handleVideoInteraction = () => {
@@ -204,11 +211,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     showControlsTemporarily()
   }
 
+  const handleVideoClick = () => {
+    showControlsTemporarily()
+  }
+
   useEffect(() => {
-    if (!isPlaying) {
+    if (isPlaying) {
+      showControlsTemporarily()
+    } else {
       setShowControls(true)
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current)
+      }
     }
-  }, [isPlaying])
+  }, [isPlaying, showControlsTemporarily])
 
   return (
     <div className={`${fullWidth ? 'w-full' : 'max-w-4xl mx-auto'} ${fullHeight ? 'h-full' : ''}`}>
@@ -220,6 +236,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTogglePlay={togglePlay}
+        onClick={handleVideoClick}
       >
         <CenterPlayOverlay isPlaying={isPlaying} />
 
