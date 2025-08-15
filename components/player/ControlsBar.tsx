@@ -3,11 +3,11 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import ApiService from "@/services/api"
+import Link from "next/link"
+import Image from "next/image"
 import {
   Play,
   Pause,
-  SkipBack,
-  SkipForward,
   Volume2,
   VolumeX,
   Maximize2,
@@ -38,12 +38,6 @@ type ControlsBarProps = {
   isFullscreen: boolean
   onToggleFullscreen: () => void
   uploadResponse?: any
-}
-
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60)
-  const seconds = Math.floor(time % 60)
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`
 }
 
 export default function ControlsBar({
@@ -83,10 +77,12 @@ export default function ControlsBar({
         onClick={onProgressClick}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
+        currentTime={currentTime}
+        duration={duration}
       />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
@@ -105,30 +101,6 @@ export default function ControlsBar({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onSkipBackward}
-            onTouchStart={onTouchStart}
-            className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-            style={{ borderRadius: "0" }}
-            title="Skip Backward 10s"
-          >
-            <SkipBack className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSkipForward}
-            onTouchStart={onTouchStart}
-            className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
-            style={{ borderRadius: "0" }}
-            title="Skip Forward 10s"
-          >
-            <SkipForward className="w-3 h-3 sm:w-4 sm:h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
             onClick={onToggleMute}
             onTouchStart={onTouchStart}
             className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
@@ -141,9 +113,19 @@ export default function ControlsBar({
             )}
           </Button>
 
-          <div className="text-xs text-gray-300 ml-2">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
+          <Link 
+            href={process.env.NEXT_PUBLIC_WEB_URL || '/'} 
+            className="flex ml-3 items-center gap-2 text-white hover:text-gray-300 transition-colors duration-200"
+          >
+            <Image
+              src="/icon/icon.png"
+              alt="PlayPi"
+              width={20}
+              height={20}
+              className="rounded-sm"
+            />
+            <span className="text-sm font-semibold">PlayPi</span>
+          </Link>
         </div>
 
         <div className="flex items-center gap-1">

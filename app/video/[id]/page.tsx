@@ -226,18 +226,28 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
             showBackButton={false}
             fullWidth={true}
             fullHeight={true}
+            autoPlay={true}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
             <p>Video source not available</p>
           </div>
         )}
-        
-        <div className="absolute top-4 left-4 text-white text-base font-semibold z-20 line-clamp-2 max-w-xs">
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/latest-videos')}
+          className="absolute top-4 left-4 text-white hover:bg-white/20 w-10 h-10 cursor-pointer z-20"
+          style={{ borderRadius: "0" }}
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </Button>
+
+        <div className="absolute top-4 left-20 text-white text-base font-semibold z-20 line-clamp-2 max-w-[50%]">
           {currentVideo.title}
         </div>
 
-        {/* Mobile Swipe Indicator */}
         <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-xs z-20 bg-black/50 px-3 py-1 rounded">
           Swipe up/down to navigate • Auto-play
         </div>
