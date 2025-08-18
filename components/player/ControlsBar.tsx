@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import ApiService from "@/services/api"
 import Link from "next/link"
@@ -38,6 +38,7 @@ type ControlsBarProps = {
   isFullscreen: boolean
   onToggleFullscreen: () => void
   uploadResponse?: any
+  videoId?: string
 }
 
 export default function ControlsBar({
@@ -58,10 +59,40 @@ export default function ControlsBar({
   isFullscreen,
   onToggleFullscreen,
   uploadResponse,
+  videoId,
 }: ControlsBarProps) {
+  const [videoDetails, setVideoDetails] = useState<any>(null)
+  const [isLoadingVideo, setIsLoadingVideo] = useState(false)
+
+  // Fetch video details when videoId changes
+  useEffect(() => {
+    if (videoId) {
+      setIsLoadingVideo(true)
+      ApiService.getVideoById(videoId)
+        .then((response) => {
+          setVideoDetails(response)
+        })
+        .catch((error) => {
+          console.error('Error fetching video details:', error)
+        })
+        .finally(() => {
+          setIsLoadingVideo(false)
+        })
+    }
+  }, [videoId])
+
   const handleDownload = () => {
-    if (uploadResponse?.filename) {
-      ApiService.downloadVideo(uploadResponse.filename)
+    console.log('Download clicked')
+    
+    // Try to get download URL from videoDetails first, then fallback to uploadResponse
+    const downloadUrl = videoDetails?.download_url || uploadResponse?.download_url
+    
+    if (downloadUrl) {
+      console.log('Using download_url:', downloadUrl)
+      ApiService.downloadVideo(downloadUrl)
+    } else {
+      console.log('No download_url found')
+      alert('Download tidak tersedia untuk video ini')
     }
   }
 
@@ -129,15 +160,16 @@ export default function ControlsBar({
         </div>
 
         <div className="flex items-center gap-1">
-          {uploadResponse?.filename && (
+          {(videoDetails?.download_url || uploadResponse?.download_url) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDownload}
               onTouchStart={onTouchStart}
-              className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
+              disabled={isLoadingVideo}
+              className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0 disabled:opacity-50"
               style={{ borderRadius: "0" }}
-              title="Download Video"
+              title={isLoadingVideo ? "Loading..." : "Download Video"}
             >
               <Download className="w-3 h-3 sm:w-4 sm:h-4" />
             </Button>

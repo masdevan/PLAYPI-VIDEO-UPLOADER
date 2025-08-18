@@ -30,9 +30,24 @@ export class ApiService {
     }
   }
 
-  static downloadVideo(filename: string) {
-    const downloadUrl = `${API_BASE}/download/${filename}`
-    window.open(downloadUrl, '_blank')
+  static downloadVideo(downloadUrl?: string, filename?: string) {
+    console.log('ApiService.downloadVideo called with:', { downloadUrl, filename })
+    if (downloadUrl) {
+      console.log('Opening download_url in new tab:', downloadUrl)
+      window.open(downloadUrl, '_blank')
+    } else if (filename) {
+      console.log('Using filename fallback:', filename)
+      const fallbackUrl = `${API_BASE}/download/${filename}`
+      const link = document.createElement('a')
+      link.href = fallbackUrl
+      link.download = filename
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } else {
+      console.log('No download URL or filename provided')
+    }
   }
 
   static async getVideos(page: number = 1, perPage: number = 10) {
@@ -45,10 +60,6 @@ export class ApiService {
   static async getVideoById(id: string) {
     const response = await axios.get(`${API_BASE}/videos/${id}`)
     return response.data
-  }
-
-  static getThumbnailUrl(filename: string) {
-    return `${API_BASE}/thumbnail/${filename}`
   }
 
   static getStreamUrl(filename: string) {

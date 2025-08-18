@@ -44,7 +44,6 @@ export default function VideoSurface(
     const clickArea = clickX < videoWidth / 3 ? 'left' : clickX > (videoWidth * 2) / 3 ? 'right' : 'center'
   
     if (currentTime - lastClickTime.current < 300 && lastClickArea.current === clickArea) {
-      // Double click detected
       if (clickArea === 'left' && onSkipBackward) {
         onSkipBackward()
         setShowLeftIcon(true)
@@ -54,7 +53,6 @@ export default function VideoSurface(
         setShowRightIcon(true)
         setTimeout(() => setShowRightIcon(false), 1000)
       } else if (clickArea === 'center') {
-        // Center double click also toggles play/pause
         onTogglePlay()
         onClick?.()
       }
@@ -62,7 +60,6 @@ export default function VideoSurface(
       lastClickTime.current = 0
       lastClickArea.current = null
     } else {
-      // Single click anywhere toggles play/pause
       onTogglePlay()
       onClick?.()
     

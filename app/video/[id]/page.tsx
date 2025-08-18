@@ -24,6 +24,8 @@ interface Video {
   updated_at: string
   preview_url: string
   thumbnail_url: string
+  stream_url?: string
+  download_url?: string
 }
 
 interface VideoPageProps {
@@ -218,10 +220,11 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative w-full h-full">
-        {currentVideo.preview_url ? (
+        {(currentVideo.stream_url || currentVideo.preview_url) ? (
           <VideoPlayer 
-            src={currentVideo.preview_url}
+            src={currentVideo.stream_url || currentVideo.preview_url}
             uploadResponse={currentVideo}
+            videoId={currentVideo.id.toString()}
             onBack={() => router.push('/latest-videos')}
             showBackButton={false}
             fullWidth={true}
@@ -263,7 +266,6 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         </Button>
       </div>
 
-      {/* Desktop Navigation */}
       <div className="hidden md:flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
         <Button
           variant="ghost"
