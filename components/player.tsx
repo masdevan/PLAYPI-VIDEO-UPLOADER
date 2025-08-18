@@ -356,9 +356,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (isPlayRequestPending) return
 
     try {
-      video.muted = true
-      setIsMuted(true)
-      autoMutedRef.current = true
+      video.muted = false
+      setIsMuted(false)
+      autoMutedRef.current = false
     } catch {}
     safePlay()
 
