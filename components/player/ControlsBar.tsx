@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import ApiService from "@/services/api"
 import Link from "next/link"
@@ -13,8 +13,11 @@ import {
   Maximize2,
   Minimize,
   Download,
+  Share2,
 } from "lucide-react"
 import ProgressBar from "./ProgressBar"
+import { useRouter } from "next/navigation"
+import Settings from "@/components/player/Settings"
 
 type ControlsBarProps = {
   show: boolean
@@ -39,6 +42,9 @@ type ControlsBarProps = {
   onToggleFullscreen: () => void
   uploadResponse?: any
   videoId?: string
+  playbackRate?: number
+  onChangePlaybackRate?: (rate: number) => void
+  embedCode?: string
 }
 
 export default function ControlsBar({
@@ -60,11 +66,18 @@ export default function ControlsBar({
   onToggleFullscreen,
   uploadResponse,
   videoId,
+  playbackRate,
+  onChangePlaybackRate,
+  embedCode,
 }: ControlsBarProps) {
   const [videoDetails, setVideoDetails] = useState<any>(null)
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
+  const router = useRouter()
+  const [showShareTooltip, setShowShareTooltip] = useState(false)
+  const [shareTooltipText, setShareTooltipText] = useState("URL copied to clipboard")
+  const shareTooltipTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const navigateTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch video details when videoId changes
   useEffect(() => {
     if (videoId) {
       setIsLoadingVideo(true)
@@ -81,10 +94,11 @@ export default function ControlsBar({
     }
   }, [videoId])
 
+  const currentShareUrl = videoDetails?.share_url || uploadResponse?.share_url
+
   const handleDownload = () => {
     console.log('Download clicked')
     
-    // Try to get download URL from videoDetails first, then fallback to uploadResponse
     const downloadUrl = videoDetails?.download_url || uploadResponse?.download_url
     
     if (downloadUrl) {
@@ -95,6 +109,38 @@ export default function ControlsBar({
       alert('Download tidak tersedia untuk video ini')
     }
   }
+
+  const handleShare = async () => {
+    try {
+      if (!currentShareUrl) {
+        setShareTooltipText("Cannot share: missing video ID")
+        setShowShareTooltip(true)
+        if (shareTooltipTimerRef.current) clearTimeout(shareTooltipTimerRef.current)
+        shareTooltipTimerRef.current = setTimeout(() => setShowShareTooltip(false), 1200)
+        return
+      }
+
+      try {
+        await navigator.clipboard.writeText(currentShareUrl)
+        setShareTooltipText("URL copied to clipboard")
+      } catch (err) {
+        setShareTooltipText("Copy failed")
+      }
+
+      setShowShareTooltip(true)
+      if (shareTooltipTimerRef.current) clearTimeout(shareTooltipTimerRef.current)
+      shareTooltipTimerRef.current = setTimeout(() => setShowShareTooltip(false), 1200)
+    } catch (error) {
+      console.error('Error in share:', error)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (shareTooltipTimerRef.current) clearTimeout(shareTooltipTimerRef.current)
+      if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current)
+    }
+  }, [])
 
   return (
     <div
@@ -160,6 +206,30 @@ export default function ControlsBar({
         </div>
 
         <div className="flex items-center gap-1">
+          <div className="relative">
+            {showShareTooltip && (
+              <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white text-black text-xs px-2 py-1 rounded shadow z-[1000]">
+                {shareTooltipText}
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              onTouchStart={onTouchStart}
+              className="text-white hover:bg-white/20 w-7 h-7 sm:w-9 sm:h-9 cursor-pointer p-0"
+              style={{ borderRadius: "0" }}
+              title="Share"
+            >
+              <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          </div>
+          <Settings 
+            onTouchStart={onTouchStart}
+            playbackRate={playbackRate}
+            onChangePlaybackRate={onChangePlaybackRate}
+            embedCode={currentShareUrl ? `<iframe src="${currentShareUrl}" width="360" height="640" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>` : embedCode}
+          />
           {(videoDetails?.download_url || uploadResponse?.download_url) && (
             <Button
               variant="ghost"

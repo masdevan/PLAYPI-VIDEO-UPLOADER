@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image" 
-import { ChevronUp, ChevronDown, Share2, Home, Loader2, ChevronLeft } from "lucide-react"
+import { ChevronUp, ChevronDown, Home, Loader2, ChevronLeft } from "lucide-react"
 import { toast } from "react-hot-toast"
 import ApiService from "@/services/api"
 import VideoPlayer from "@/components/player" 
@@ -44,6 +44,17 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
   const [loading, setLoading] = useState(true)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [isEmbedded, setIsEmbedded] = useState(false)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        setIsEmbedded(window.self !== window.top)
+      } catch {
+        setIsEmbedded(true)
+      }
+    }
+  }, [])
+
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -156,7 +167,7 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
   )
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !isEmbedded) {
       window.addEventListener("wheel", handleScroll, { passive: false })
       window.addEventListener("keydown", handleKeyDown)
       return () => {
@@ -167,14 +178,9 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         }
       }
     }
-  }, [handleScroll, handleKeyDown])
+  }, [handleScroll, handleKeyDown, isEmbedded])
 
-  const handleShare = useCallback(() => {
-    if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href)
-      toast.success("Video link has been copied to clipboard")
-    }
-  }, [])
+  
 
   const isFirstVideo = currentVideoIndex === 0
   const isLastVideo = currentVideoIndex === videos.length - 1
@@ -185,8 +191,21 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
         className="flex flex-col min-h-screen items-center justify-center text-white"
         style={{ backgroundColor: "#111111" }}
       >
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-        <p className="mt-4 text-gray-400">Loading video...</p>
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl animate-pulse" />
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-purple-400 via-fuchsia-500 to-indigo-500 animate-spin" />
+            <div className="absolute inset-[6px] sm:inset-[8px] rounded-full" style={{ backgroundColor: '#111111' }} />
+            <svg
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
       </div>
     )
   }
@@ -215,9 +234,9 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
     <div
       className="relative w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{ backgroundColor: "#111111" }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={isEmbedded ? undefined : handleTouchStart}
+      onTouchMove={isEmbedded ? undefined : handleTouchMove}
+      onTouchEnd={isEmbedded ? undefined : handleTouchEnd}
     >
       <div className="relative w-full h-full">
         {(currentVideo.stream_url || currentVideo.preview_url) ? (
@@ -237,57 +256,53 @@ const VideoPage: React.FC<VideoPageProps> = ({ params }) => {
           </div>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/latest-videos')}
-          className="absolute top-4 left-4 text-white hover:bg-white/20 w-10 h-10 cursor-pointer z-20"
-          style={{ borderRadius: "0" }}
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </Button>
+        {!isEmbedded && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push('/latest-videos')}
+            className="absolute top-4 right-4 text-white hover:bg-white/20 w-10 h-10 cursor-pointer z-20"
+            style={{ borderRadius: "0" }}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Button>
+        )}
 
-        <div className="absolute top-4 left-20 text-white text-base font-semibold z-20 line-clamp-2 max-w-[50%]">
-          {currentVideo.title}
-        </div>
+        
 
-        <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-xs z-20 bg-black/50 px-3 py-1 rounded">
-          Swipe up/down to navigate • Auto-play
-        </div>
+        {!isEmbedded && (
+          <div className="md:hidden absolute top-4 left-1/2 -translate-x-1/2 text-white/70 text-xs z-20 bg-black/50 px-3 py-1 rounded">
+            Swipe up/down to navigate • Auto-play
+          </div>
+        )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleShare}
-          className="absolute top-4 right-4 text-white hover:bg-white/20 w-10 h-10 cursor-pointer z-20"
-          style={{ borderRadius: "0" }}
-        >
-          <Share2 className="w-6 h-6" />
-        </Button>
+        
       </div>
 
-      <div className="hidden md:flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigateVideo("up")}
-          disabled={isFirstVideo}
-          className="text-white hover:bg-white/20 w-10 h-10 cursor-pointer"
-          style={{ borderRadius: "0" }}
-        >
-          <ChevronUp className="w-6 h-6" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigateVideo("down")}
-          disabled={isLastVideo}
-          className="text-white hover:bg-white/20 w-10 h-10 cursor-pointer"
-          style={{ borderRadius: "0" }}
-        >
-          <ChevronDown className="w-6 h-6" />
-        </Button>
-      </div>
+      {!isEmbedded && (
+        <div className="hidden md:flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateVideo("up")}
+            disabled={isFirstVideo}
+            className="text-white hover:bg-white/20 w-10 h-10 cursor-pointer"
+            style={{ borderRadius: "0" }}
+          >
+            <ChevronUp className="w-6 h-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigateVideo("down")}
+            disabled={isLastVideo}
+            className="text-white hover:bg-white/20 w-10 h-10 cursor-pointer"
+            style={{ borderRadius: "0" }}
+          >
+            <ChevronDown className="w-6 h-6" />
+          </Button>
+        </div>
+      )}
 
 
     </div>
