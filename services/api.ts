@@ -1,11 +1,58 @@
 import axios from 'axios'
-
 const API_BASE = process.env.NEXT_PUBLIC_API || 'http://127.0.0.1:8000/api'
 const CHUNK_SIZE = parseInt(process.env.NEXT_PUBLIC_CHUNK_SIZE || '1') * 1024 * 1024
+
+const captureVideoFrame = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video')
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'))
+      return
+    }
+
+    video.onloadedmetadata = () => {
+      const middleTime = video.duration * 0.5
+      const randomOffset = (Math.random() - 0.5) * 0.2 
+      const seekTime = Math.max(0, Math.min(video.duration, middleTime + (middleTime * randomOffset)))
+      
+      video.currentTime = seekTime
+    }
+
+    video.onseeked = () => {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob)
+        } else {
+          reject(new Error('Failed to capture video frame'))
+        }
+      }, 'image/jpeg', 0.8)
+    }
+
+    video.onerror = () => {
+      reject(new Error('Error loading video'))
+    }
+
+    video.src = URL.createObjectURL(file)
+  })
+}
 
 export class ApiService {
   static async uploadVideo(file: File, onProgress?: (progress: number) => void) {
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+    
+    let videoFrame: Blob | null = null
+    try {
+      videoFrame = await captureVideoFrame(file)
+    } catch (error) {
+      console.warn('Failed to capture video frame:', error)
+    }
     
     for (let index = 0; index < totalChunks; index++) {
       const start = index * CHUNK_SIZE
@@ -18,6 +65,10 @@ export class ApiService {
       formData.append('total', totalChunks.toString())
       formData.append('filename', file.name)
       formData.append('title', file.name.replace(/\.[^/.]+$/, ""))
+      
+      if (videoFrame && index === 0) {
+        formData.append('image', videoFrame, 'thumbnail.jpg')
+      }
 
       const response = await axios.post(`${API_BASE}/videos`, formData)
       if (onProgress) {

@@ -75,11 +75,15 @@ export default function Settings({ onTouchStart, playbackRate = 1, onChangePlayb
                 {[1, 1.2, 1.5, 2, 4, 8].map((rate) => (
                   <button
                     key={rate}
-                    className={`px-2 py-1.5 border cursor-pointer ${playbackRate === rate ? 'bg-white text-black' : 'bg-transparent text-white'} border-white/20 hover:bg-white/10 transition`}
+                    className={`px-2 py-1.5 border cursor-pointer ${
+                      playbackRate === rate 
+                        ? 'bg-white text-black' 
+                        : 'bg-transparent text-white border-white/20 hover:bg-white/10'
+                    } transition`}
                     onClick={() => onChangePlaybackRate && onChangePlaybackRate(rate)}
                   >
                     {rate === 1 ? 'Normal' : `${rate}x`}
-                  </button>
+                </button>
                 ))}
               </div>
             </div>

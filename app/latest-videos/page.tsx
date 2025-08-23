@@ -26,6 +26,7 @@ interface Video {
   updated_at: string
   preview_url: string
   thumbnail_url: string
+  image_url: string
 }
 
 interface PaginationInfo {
@@ -112,28 +113,20 @@ const FeaturedVideosPage = () => {
                 <div 
                   className="relative w-full group" 
                   style={{ aspectRatio: "9/16" }}
-                  onMouseEnter={(e) => {
-                    const video = e.currentTarget.querySelector('video')
-                    if (video) {
-                      video.play().catch(() => {
-                        console.log('Auto-play blocked by browser')
-                      })
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    const video = e.currentTarget.querySelector('video')
-                    if (video) {
-                      video.pause()
-                    }
-                  }}
                 >
-                  <video
-                    src={video.preview_url}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    muted
-                    loop
-                    preload="metadata"
-                  />
+                  {video.image_url ? (
+                    <Image
+                      src={video.image_url}
+                      alt={video.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                      <Play className="w-10 h-10 text-gray-400" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Play className="w-10 h-10 text-white" />
