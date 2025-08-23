@@ -525,7 +525,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             }
           }}
         >
-          <AdRedirect isPlaying={isPlaying}>
             <VideoSurface
               videoRef={videoRef}
               videoContainerRef={videoContainerRef}
@@ -570,8 +569,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   return `<iframe src="${base}/video/${videoId}" width="360" height="640" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`
                 })()}
               />
+              
+              <AdRedirect isPlaying={isPlaying} />
             </VideoSurface>
-          </AdRedirect>
         </AdBlockerDetection>
       </div>
 

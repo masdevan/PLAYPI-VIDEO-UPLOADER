@@ -87,19 +87,35 @@ export default function VideoSurface(
       <video
         ref={videoRef}
         src={src}
-        className="w-full h-full bg-black object-contain"
+        className="w-full h-full bg-black object-contain select-none"
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
+        style={{ 
+          userSelect: 'none', 
+          WebkitUserSelect: 'none', 
+          MozUserSelect: 'none', 
+          msUserSelect: 'none',
+          pointerEvents: 'none'
+        }}
       />
 
       <div
-        className="absolute inset-0 w-full h-full"
-        style={{ pointerEvents: "auto" }}
+        className="absolute inset-0 w-full h-full select-none"
+        style={{ 
+          pointerEvents: "auto",
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none'
+        }}
         onContextMenu={(e) => e.preventDefault()}
         onClick={handleVideoClick}
         onMouseMove={onMouseMove}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
       />
 
       {onSkipBackward && (

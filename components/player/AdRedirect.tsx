@@ -5,7 +5,7 @@ import AD_CONFIG from '@/lib/adConfig'
 
 interface MediaPlayerProps {
     isPlaying: boolean
-    children: React.ReactNode
+    children?: React.ReactNode
 }
 
 const MediaPlayer: React.FC<MediaPlayerProps> = ({ isPlaying, children }) => {
@@ -136,31 +136,33 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ isPlaying, children }) => {
 
     return (
         <div
-            className="relative w-full h-full"
+            className="absolute inset-0 w-full h-full pointer-events-none"
             onClick={handleUserEngagement}
             onTouchStart={handleUserEngagement}
         >
-            {children}
 
             {showUserLayer && EXTERNAL_TARGET && (
-                <div className="fixed inset-0 w-full h-full z-40">
+                <div className="absolute inset-0 w-full h-full z-[99999] pointer-events-auto">
                     <div
                         className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"
                         onClick={handleUserClick}
+                        style={{ pointerEvents: 'auto' }}
                     />
                 </div>
             )}
 
             {showMediaOverlay && EXTERNAL_TARGET && (
-                <div className="fixed inset-0 w-full h-full z-50">
+                <div className="absolute inset-0 w-full h-full z-[999999] pointer-events-auto">
                     <div
                         className="absolute inset-0 w-full h-full bg-black/50"
                         onClick={handleMediaClick}
+                        style={{ pointerEvents: 'auto' }}
                     />
                     
                     <button
                         onClick={handleMediaClick}
                         className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-lg font-bold hover:bg-red-600 transition-colors z-10 cursor-pointer"
+                        style={{ pointerEvents: 'auto' }}
                     >
                         ×
                     </button>
@@ -169,6 +171,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ isPlaying, children }) => {
                         <div 
                             className="bg-white/90 rounded-lg p-6 text-center max-w-sm mx-4 pointer-events-auto cursor-pointer hover:bg-white/95 transition-colors"
                             onClick={handleMediaClick}
+                            style={{ pointerEvents: 'auto' }}
                         >
                             <h3 className="text-lg font-bold text-gray-800 mb-2">
                                 Special Offer!
@@ -179,6 +182,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({ isPlaying, children }) => {
                             <button
                                 onClick={handleMediaClick}
                                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                style={{ pointerEvents: 'auto' }}
                             >
                                 Click Here
                             </button>
