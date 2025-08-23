@@ -7,4 +7,4 @@
 ## About
 
 **PlayPi** is a video streaming platform that is easy, free, and limitless.  
-No restrictions, no boundaries—just seamless video experiences.
+No restrictions, anywhere, without restrictions.
