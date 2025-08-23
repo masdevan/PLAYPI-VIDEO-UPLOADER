@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "react-hot-toast"
 import { Upload, Loader2 } from "lucide-react"
@@ -15,14 +15,16 @@ import ApiService from "@/services/api"
 import VideoPlayer from "@/components/player"
 
 const Page: React.FC = () => {
-  const [uploadedVideo, setUploadedVideo] = React.useState<string | null>(null)
-  const [uploadResponse, setUploadResponse] = React.useState<any>(null)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [isTosAccepted, setIsTosAccepted] = React.useState(false)
-  const [isUploading, setIsUploading] = React.useState(false)
-  const [uploadProgress, setUploadProgress] = React.useState(0)
+  const [uploadedVideo, setUploadedVideo] = useState<string | null>(null)
+  const [uploadResponse, setUploadResponse] = useState<any>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isTosAccepted, setIsTosAccepted] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [currentPhase, setCurrentPhase] = useState<string>('')
+  const [currentResolution, setCurrentResolution] = useState<string>('')
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File) => {
     const validation = validateVideoFile(file)
@@ -33,10 +35,14 @@ const Page: React.FC = () => {
 
     setIsUploading(true)
     setUploadProgress(0)
+    setCurrentPhase('Initializing Video...')
+    setCurrentResolution('')
     
     try {
-      const response = await ApiService.uploadVideo(file, (progress) => {
+      const response = await ApiService.uploadVideo(file, (progress, resolution, phase) => {
         setUploadProgress(progress)
+        if (resolution) setCurrentResolution(resolution)
+        if (phase) setCurrentPhase(phase)
       })
       
       const objectUrl = URL.createObjectURL(file)
@@ -49,6 +55,8 @@ const Page: React.FC = () => {
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
+      setCurrentPhase('')
+      setCurrentResolution('')
     }
   }
 
@@ -95,8 +103,24 @@ const Page: React.FC = () => {
               {isUploading ? (
                 <div className="text-center relative">
                   <Loader2 className="w-14 h-14 mx-auto mb-4 text-gray-400 animate-spin" />
-                  <div className="text-sm font-bold text-purple-400 absolute top-0 translate-x-1/2 left-1/2" style={{ marginLeft: uploadProgress < 10 ? "-22px" : "-32px", marginTop: "18px" }}>
+                  
+                  <div className="text-sm font-bold text-purple-400 absolute top-0 translate-x-1/2 left-1/2" style={{ 
+                    marginLeft: uploadProgress < 10 ? "-22px" : uploadProgress === 100 ? "-35px" : "-32px", 
+                    marginTop: "18px" 
+                  }}>
                     {uploadProgress}%
+                  </div>
+                  
+                  <div className="mt-6 space-y-3">
+                    <div className="text-sm text-gray-300">
+                      {currentPhase}
+                    </div>
+                    
+                    {currentResolution && (
+                      <div className="text-xs text-purple-400 font-medium">
+                        Current: {currentResolution}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -106,16 +130,17 @@ const Page: React.FC = () => {
                     Upload Your Video
                   </h2>
                   <p className="text-sm sm:text-base text-gray-400 mb-6">Drag & drop your video file or click to select</p>
+                  
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm sm:text-base cursor-pointer"
+                    style={{ borderRadius: "0" }}
+                    disabled={!isTosAccepted}
+                  >
+                    Select Video File
+                  </Button>
                 </>
               )}
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm sm:text-base cursor-pointer"
-                style={{ borderRadius: "0" }}
-                disabled={!isTosAccepted || isUploading}
-              >
-                {isUploading ? "Uploading..." : "Select Video File"}
-              </Button>
               <input
                 ref={fileInputRef}
                 type="file"
